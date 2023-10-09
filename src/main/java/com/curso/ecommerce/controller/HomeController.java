@@ -64,7 +64,14 @@ public class HomeController {
         detalleOrden.setTotal(producto.getPrecio()*cantidad);
         detalleOrden.setProducto(producto);
 
-        detalles.add(detalleOrden);
+        //Validar que el mismo producto no se añada más de una vez
+
+        Integer idProducto = producto.getId();
+        boolean ingresado = detalles.stream().anyMatch(p->p.getProducto().getId()==idProducto);
+
+        if(!ingresado){
+            detalles.add(detalleOrden);
+        }
 
         sumaTotal = detalles.stream().mapToDouble(dt->dt.getTotal()).sum();
 
@@ -72,5 +79,36 @@ public class HomeController {
         model.addAttribute("cart", detalles);
         model.addAttribute("orden", orden);
         return "/usuario/carrito";
+    }
+
+    //Eliminar un producto del carrito
+    @GetMapping("/delete/cart/{id}")
+    public  String deleteProductoCart(@PathVariable Integer id, Model model){
+        //Nueva lista luego de eliminar
+        List<DetalleOrden> ordenNueva = new ArrayList<DetalleOrden>();
+
+        for(DetalleOrden detalleOrden: detalles){
+            if(detalleOrden.getProducto().getId()!=id){
+                ordenNueva.add(detalleOrden);
+            }
+        }
+        //Actualziación de lista con los productos restantes
+        detalles=ordenNueva;
+
+        double sumaTotal =0;
+        sumaTotal = detalles.stream().mapToDouble(dt->dt.getTotal()).sum();
+        orden.setTotal(sumaTotal);
+        model.addAttribute("cart", detalles);
+        model.addAttribute("orden", orden);
+
+        return ("usuario/carrito");
+    }
+
+    @GetMapping("/getCart")
+    public String getCart(Model model){
+        model.addAttribute("cart", detalles);
+        model.addAttribute("orden", orden);
+
+        return ("/usuario/carrito");
     }
 }
